@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IronPulse | Gym & Calorie App</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;600;800&display=swap"
+    rel="stylesheet">
+
+  <script>
+    // Extending Tailwind to include our custom fonts and colors
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            logo: ['Pacifico', 'cursive'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: '#ff6b00', // A vibrant orange for high energy
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Ensuring smooth transitions for the dropdown and buttons */
+    .menu-transition {
+      transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out;
+    }
+  </style>
+</head>
+
+<body class="bg-black text-gray-100 font-sans min-h-screen">
+
+
+  <nav class="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+      <h1 class="text-3xl font-logo text-brand hover:scale-105 transition-transform cursor-pointer">
+        IronPulse
+      </h1>
+
+      <ul class="hidden md:flex space-x-10 text-sm font-bold uppercase tracking-widest">
+        <li><a href="exercises.html" class="hover:text-brand transition">Workouts</a></li>
+        <li><a href="programs.html" class="hover:text-brand transition">PROGRAMS</a></li>
+        <li><a href="#" class="hover:text-brand transition">Calories</a></li>
+        <li><a href="#" class="hover:text-brand transition">Community</a></li>
+      </ul>
+
+      <button id="menu-btn" class="md:hidden text-white focus:outline-none">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path id="menu-icon" stroke-  linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 6h16M4 12h16m-7 6h7"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div id="mobile-menu" class="hidden flex-col bg-gray-900 px-6 py-4 space-y-4 md:hidden border-t border-gray-800">
+      <a href="#" class="text-lg font-semibold hover:text-brand">Workouts</a>
+      <a href="#" class="text-lg font-semibold hover:text-brand">Calories</a>
+      <a href="#" class="text-lg font-semibold hover:text-brand">Community</a>
+    </div>
+  </nav>
+  <header
+    class="min-h-screen flex flex-col justify-center items-center text-center px-6 bg-gradient-to-b from-gray-950 to-black">
+
+    <h2 class="text-6xl md:text-8xl font-extrabold mb-6 tracking-tighter uppercase animate-pulse">
+      Push Your <span class="text-brand">Limits.</span>
+    </h2>
+
+    <p id="motivation-quote"
+      class="text-gray-400 max-w-2xl mx-auto italic text-xl md:text-2xl border-l-4 border-brand pl-6 py-4 bg-gray-900/30 rounded-r-lg">
+      Loading inspiration...
+    </p>
+
+    <div class="mt-12 animate-bounce">
+      <svg class="w-10 h-10 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7-7-7m14-8l-7 7-7-7"></path>
+      </svg>
+    </div>
+  </header>
+ <section class="container mx-auto px-6 py-20">
+    <div class="bg-gradient-to-r from-orange-600 to-red-600 rounded-3xl p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between">
+        <div class="mb-6 md:mb-0">
+            <span class="bg-black/30 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest text-white">Daily Prep</span>
+            <h3 class="text-3xl font-black mt-2 text-white uppercase italic">Warm-Up of the Day</h3>
+            <p id="warmup-name" class="text-xl font-bold mt-1 text-orange-100">Dynamic Stretching</p>
+        </div>
+        
+        <div id="warmup-details" class="bg-black/20 p-6 rounded-2xl backdrop-blur-sm border border-white/10 md:w-1/2">
+            <ul id="warmup-list" class="space-y-2 text-gray-100 font-medium">
+                </ul>
+        </div>
+    </div>
+</section>
+
+  <main class="container mx-auto px-6 py-12">
+
+    <header class="text-center mb-16">
+      <h2 class="text-5xl font-extrabold mb-4 tracking-tight">PUSH YOUR <span class="text-brand">LIMITS.</span></h2>
+      <p class="text-gray-400 max-w-lg mx-auto italic">Your journey to peak performance starts with data and discipline.
+      </p>
+    </header>
+
+    <section class="max-w-md mx-auto bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-2xl">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="bg-brand p-2 rounded-lg">
+          <svg class="w-6 h-6 text-black" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M13.5 10a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM7.5 10a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+            <path fill-rule="evenodd"
+              d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9V7a1 1 0 011-1h10a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold">Daily Calorie Calculator</h3>
+      </div>
+
+      <div class="space-y-6">
+        <div>
+          <label class="block text-xs uppercase text-gray-500 font-bold mb-2">Weight (KG)</label>
+          <input type="number" id="weight" placeholder="e.g. 75"
+            class="w-full p-4 bg-black rounded-xl border border-gray-700 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition text-xl font-bold">
+        </div>
+
+        <button onclick="calculateCal()"
+          class="w-full bg-brand text-black font-extrabold py-4 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-lg shadow-orange-900/20">
+          ANALYZE NEEDS
+        </button>
+
+        <div id="result-box"
+          class="hidden mt-6 p-6 bg-black rounded-2xl border-2 border-brand/20 text-center animate-pulse">
+          <p class="text-gray-400 text-sm uppercase font-bold tracking-widest">Estimated Maintenance</p>
+          <p id="result" class="text-4xl font-black text-brand mt-2"></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Mobile Menu Toggle Logic
+    const btn = document.getElementById('menu-btn');
+    const menu = document.getElementById('mobile-menu');
+
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+      menu.classList.toggle('flex');
+    });
+
+    // Calorie Calculation Logic (Mifflin-St Jeor Estimation)
+    function calculateCal() {
+      const weight = document.getElementById('weight').value;
+      const resultBox = document.getElementById('result-box');
+      const resultText = document.getElementById('result');
+
+      if (weight > 0 && weight < 500) {
+        // Calculation: Base metabolic rate estimate for active individuals
+        const calories = Math.round(weight * 33.5);
+
+        resultBox.classList.remove('hidden');
+        resultText.innerText = `${calories} KCAL`;
+
+        // Remove pulse after calculation for clarity
+        resultBox.classList.remove('animate-pulse');
+      } else {
+        alert("Please enter a plausible weight!");
+      }
+    }
+
+    const quotes = [
+      "The only bad workout is the one that didn't happen.",
+      "Discipline is doing what needs to be done, even if you don't want to do it.",
+      "Your body can stand almost anything. It’s your mind that you have to convince.",
+      "Fitness is not about being better than someone else. It’s about being better than you were yesterday.",
+      "Action is the foundational key to all success.",
+      "Don’t stop when you’re tired. Stop when you’re done.",
+      "Motivation is what gets you started. Habit is what keeps you going.",
+      "Suffer the pain of discipline or suffer the pain of regret.",
+      "Strength does not come from winning. Your struggles develop your strengths.",
+      "The hard part isn't getting your body in shape. The hard part is getting your mind in shape.",
+      "Success starts with self-discipline.",
+      "A one-hour workout is only 4% of your day. No excuses.",
+      "The clock is ticking. Are you becoming the person you want to be?",
+      "Don't wish for a good body, work for it.",
+      "Focus on your goal. Don't look in any direction but ahead.",
+      "Small progress is still progress.",
+      "You don't have to be extreme, just consistent.",
+      "Your health is an investment, not an expense.",
+      "The gym is my therapy.",
+      "Sweat is just fat crying.",
+      "Fall seven times, stand up eight.",
+      "Everything you've ever wanted is on the other side of fear.",
+      "Hard work beats talent when talent doesn’t work hard.",
+      "You are much stronger than you think you are.",
+      "Definition of a really good workout: when you hate doing it, but you love finishing it.",
+      "Push yourself, because no one else is going to do it for you.",
+      "Sometimes you don’t realize your own strength until you face your greatest weakness.",
+      "The only way to define your limits is by going beyond them.",
+      "Great things never come from comfort zones.",
+      "If it doesn’t challenge you, it won’t change you.",
+      "Doubt kills more dreams than failure ever will.",
+      "Wake up. Work out. Look hot. Kick ass.",
+      "The body achieves what the mind believes.",
+      "Today’s pain is tomorrow’s power.",
+      "Rome wasn't built in a day, but they were laying bricks every hour.",
+      "Train like a beast, look like a beauty.",
+      "Go the extra mile. It’s never crowded.",
+      "Look in the mirror. That’s your competition.",
+      "Tough times don’t last. Tough people do.",
+      "You earn your body. You don't just get it.",
+      "Make yourself a priority.",
+      "Excuses don't burn calories.",
+      "When you feel like quitting, think about why you started.",
+      "A year from now you may wish you had started today.",
+      "Be the best version of you.",
+      "Progress, not perfection.",
+      "Pain is temporary. Pride is forever.",
+      "Shut up and squat.",
+      "Get comfortable with being uncomfortable.",
+      "Don't limit your challenges. Challenge your limits."
+    ];
+
+    function displayRandomQuote() {
+      const quoteElement = document.getElementById('motivation-quote');
+      // Math.random() picks a decimal, Math.floor() rounds it down to a whole index
+      const randomIndex = Math.floor(Math.random() * quotes.length);
+      quoteElement.innerText = `"${quotes[randomIndex]}"`;
+    }
+
+    // Execute the function as soon as the window loads
+    window.onload = function () {
+      displayRandomQuote();
+      // If you had other load functions (like the calorie logic), put them here too
+    };
+
+  </script>
+</body>
+
+</html>

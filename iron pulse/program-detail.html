@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IronPulse | Program Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: { 
+                    fontFamily: { logo: ['Pacifico', 'cursive'], sans: ['Inter', 'sans-serif'] },
+                    colors: { brand: '#ff6b00' } 
+                } 
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .active-day { border-color: #ff6b00 !important; color: #ff6b00 !important; background: rgba(255,107,0,0.1); transform: scale(1.05); }
+        .completed-day { background: #ff6b00 !important; color: black !important; border-color: #ff6b00 !important; }
+    </style>
+</head>
+<body class="bg-black text-white font-sans min-h-screen">
+
+    <nav class="bg-gray-900 border-b border-gray-800 p-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-logo text-brand cursor-pointer" onclick="window.location.href='index.html'">IronPulse</h1>
+            <div class="flex items-center space-x-8">
+                <a href="exercises.html" class="text-[10px] font-bold uppercase tracking-widest hover:text-brand transition">The Vault</a>
+                <a href="programs.html" class="text-[10px] font-bold uppercase tracking-widest text-brand transition">Programs</a>
+                <button class="bg-brand text-black font-black text-[10px] uppercase px-4 py-2 rounded-lg hover:bg-white transition">Profile</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 max-w-5xl">
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+            <div>
+                <h2 class="text-6xl font-black uppercase italic tracking-tighter leading-none">Iron <span class="text-brand">Origins</span></h2>
+                <p class="text-gray-500 uppercase font-bold text-[10px] tracking-[0.3em] mt-3">30-Day Master Transformation</p>
+            </div>
+            <div class="bg-gray-900 border border-gray-800 p-4 rounded-2xl min-w-[200px]">
+                <div class="flex justify-between text-[10px] font-bold uppercase mb-2">
+                    <span class="text-gray-500">Overall Progress</span>
+                    <span id="progress-percent" class="text-brand">0%</span>
+                </div>
+                <div class="w-full bg-black h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-brand h-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative group mb-10">
+            <div class="flex overflow-x-auto gap-4 pb-4 no-scrollbar items-center">
+                <div id="day-tabs-container" class="flex gap-4">
+                    </div>
+            </div>
+            <div class="absolute top-0 right-0 h-full w-20 bg-gradient-to-l from-black to-transparent pointer-events-none"></div>
+        </div>
+
+        <section class="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-[0_0_50px_rgba(255,107,0,0.15)] relative overflow-hidden">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+                <div>
+                    <h3 id="current-day-title" class="text-black font-black text-5xl uppercase italic tracking-tighter">Day 1</h3>
+                    <p id="day-focus" class="text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-1">Focus: Full Body Conditioning</p>
+                </div>
+                <button id="complete-btn" onclick="markAsDone()" 
+                    class="w-full md:w-auto bg-black text-white font-black uppercase italic text-xs px-8 py-4 rounded-2xl hover:bg-brand hover:text-black transition-all transform active:scale-95 shadow-xl">
+                    Mark Day as Finished
+                </button>
+            </div>
+
+            <div id="exercise-content" class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                </div>
+        </section>
+    </main>
+
+    <script>
+        const programData = {
+            1: { focus: "Aerobic Capacity", ex: [
+                { name: "High Knees", reps: "10", img: "/IMAGES/High_Knees.gif" },
+                { name: "Squat Jumps", reps: "3", img: "/IMAGES/Squat_Jumps.gif" }
+            ]},
+            2: { focus: "Core Foundation", ex: [
+                { name: "Plank Hold", reps: "30s", img: "/IMAGES/Plank.gif" },
+                { name: "Shoulder Taps", reps: "10", img: "/IMAGES/Shoulder_Taps.gif" }
+            ]},
+            // ... Logic for other days
+        };
+
+        let activeDay = 1;
+
+        function init() {
+            const container = document.getElementById('day-tabs-container');
+            for (let i = 1; i <= 30; i++) {
+                const isDone = localStorage.getItem(`origins-day-${i}`) === 'true';
+                container.innerHTML += `
+                    <button id="tab-${i}" onclick="selectDay(${i})" 
+                        class="flex-shrink-0 w-20 h-20 rounded-2xl border-2 border-gray-800 flex flex-col items-center justify-center transition-all duration-300
+                        ${isDone ? 'completed-day' : 'bg-gray-900'} ${i === 1 ? 'active-day' : ''}">
+                        <span class="text-[8px] font-bold uppercase opacity-60">Day</span>
+                        <span class="text-2xl font-black">${i}</span>
+                    </button>
+                `;
+            }
+            selectDay(1);
+            updateGlobalProgress();
+        }
+
+        function selectDay(day) {
+            document.querySelectorAll('#day-tabs-container button').forEach(btn => btn.classList.remove('active-day'));
+            document.getElementById(`tab-${day}`).classList.add('active-day');
+            
+            activeDay = day;
+            const data = programData[day] || { focus: "Rest & Recovery", ex: [] };
+            
+            document.getElementById('current-day-title').innerText = `Day ${day}`;
+            document.getElementById('day-focus').innerText = `Focus: ${data.focus}`;
+            
+            const isDone = localStorage.getItem(`origins-day-${day}`) === 'true';
+            const btn = document.getElementById('complete-btn');
+            btn.innerHTML = isDone ? "✓ Session Complete" : "Mark Day as Finished";
+            btn.className = isDone ? "w-full md:w-auto bg-green-500 text-white font-black uppercase italic text-xs px-8 py-4 rounded-2xl" : "w-full md:w-auto bg-black text-white font-black uppercase italic text-xs px-8 py-4 rounded-2xl hover:bg-brand hover:text-black transition-all";
+
+            const content = document.getElementById('exercise-content');
+            if(data.ex.length === 0) {
+                content.innerHTML = `<div class="col-span-full py-20 text-center"><p class="text-gray-300 italic font-medium text-xl">Active Recovery: Gentle Stretching & Hydration</p></div>`;
+            } else {
+                content.innerHTML = data.ex.map(ex => `
+                    <div class="flex flex-col items-center group">
+                        <div class="w-full aspect-video rounded-3xl overflow-hidden border-4 border-gray-50 bg-gray-50 mb-6 shadow-sm group-hover:shadow-md transition">
+                            <img src="${ex.img}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500">
+                        </div>
+                        <p class="text-black font-black text-3xl italic uppercase tracking-tighter">${ex.reps} <span class="text-gray-300">${ex.name}</span></p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function markAsDone() {
+            localStorage.setItem(`origins-day-${activeDay}`, 'true');
+            document.getElementById(`tab-${activeDay}`).classList.add('completed-day');
+            updateGlobalProgress();
+            selectDay(activeDay);
+        }
+
+        function updateGlobalProgress() {
+            let completed = 0;
+            for (let i = 1; i <= 30; i++) {
+                if (localStorage.getItem(`origins-day-${i}`) === 'true') completed++;
+            }
+            const percentage = Math.round((completed / 30) * 100);
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-percent').innerText = `${percentage}%`;
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
