@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IronPulse | Program Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;900&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { logo: ['Pacifico', 'cursive'], sans: ['Inter', 'sans-serif'] },
+                    colors: { brand: '#ff6b00' }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .active-day {
+            border-color: #ff6b00 !important;
+            color: #ff6b00 !important;
+            background: rgba(255, 107, 0, 0.1);
+            transform: scale(1.05);
+        }
+
+        .completed-day {
+            background: #ff6b00 !important;
+            color: black !important;
+            border-color: #ff6b00 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-black text-white font-sans min-h-screen">
+
+    <nav class="bg-gray-900 border-b border-gray-800 p-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-logo text-brand cursor-pointer" onclick="window.location.href='index.html'">
+                IronPulse</h1>
+            <div class="flex items-center space-x-8">
+
+                <a href="programs.html"
+                    class="text-[10px] font-bold uppercase tracking-widest text-brand transition">Programs</a>
+                <button
+                    class="bg-brand text-black font-black text-[10px] uppercase px-4 py-2 rounded-lg hover:bg-white transition">Profile</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 max-w-5xl">
+
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+            <div>
+                <h2 id="program-title" class="text-6xl font-black uppercase italic tracking-tighter leading-none">Iron
+                    <span class="text-brand">Origins</span>
+                </h2>
+                <p id="program-subtitle" class="text-gray-500 uppercase font-bold text-[10px] tracking-[0.3em] mt-3">
+                    30-Day Master Transformation</p>
+            </div>
+            <div class="bg-gray-900 border border-gray-800 p-4 rounded-2xl min-w-[200px]">
+                <div class="flex justify-between text-[10px] font-bold uppercase mb-2">
+                    <span class="text-gray-500">Overall Progress</span>
+                    <span id="progress-percent" class="text-brand">0%</span>
+                </div>
+                <div class="w-full bg-black h-2 rounded-full overflow-hidden mb-3">
+                    <div id="progress-bar" class="bg-brand h-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between items-center text-[10px] font-bold uppercase">
+                    <span class="text-gray-500">Current Streak</span>
+                    <span id="streak-count" class="text-brand">🔥 0 Days</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative group mb-10">
+            <div class="flex overflow-x-auto gap-4 pb-4 no-scrollbar items-center">
+                <div id="day-tabs-container" class="flex gap-4"></div>
+            </div>
+            <div
+                class="absolute top-0 right-0 h-full w-20 bg-gradient-to-l from-black to-transparent pointer-events-none">
+            </div>
+        </div>
+
+        <section
+            class="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-[0_0_50px_rgba(255,107,0,0.15)] relative overflow-hidden">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+                <div>
+                    <h3 id="current-day-title" class="text-black font-black text-5xl uppercase italic tracking-tighter">
+                        Day 1</h3>
+                    <p id="day-focus" class="text-gray-400 font-bold uppercase text-[10px] tracking-widest mt-1">Focus:
+                        Full Body Conditioning</p>
+                </div>
+                <button id="complete-btn" onclick="markAsDone()"
+                    class="w-full md:w-auto bg-black text-white font-black uppercase italic text-xs px-8 py-4 rounded-2xl hover:bg-brand hover:text-black transition-all transform active:scale-95 shadow-xl">
+                    Mark Day as Finished
+                </button>
+            </div>
+
+            <div id="exercise-content" class="grid grid-cols-1 md:grid-cols-2 gap-10"></div>
+        </section>
+    </main>
+
+    <!-- Shared data file: the same PROGRAMS_DATA object that populates programs.html -->
+    <script src="data.js"></script>
+    <script>
+        // Which program are we showing? e.g. program-detail.html?program=pulse-circuit
+        const params = new URLSearchParams(window.location.search);
+        const slug = params.get('program') || Object.keys(PROGRAMS_DATA)[0]; // fall back to the first program
+        const program = PROGRAMS_DATA[slug];
+
+        // Namespace the localStorage keys per-program so progress on
+        // "Pulse Circuit" doesn't collide with progress on "Strength Core".
+        const storageKey = (day) => `ironpulse-${slug}-day-${day}`;
+
+        let activeDay = 1;
+
+        // Tracks the slugs of programs the user has opened, most-recent
+        // first, so the homepage can show a "Jump Back In" section.
+        function recordRecentVisit(slug) {
+            const key = 'ironpulse-recents';
+            let recents = [];
+            try { recents = JSON.parse(localStorage.getItem(key)) || []; } catch (e) { recents = []; }
+            recents = recents.filter(s => s !== slug);
+            recents.unshift(slug);
+            localStorage.setItem(key, JSON.stringify(recents.slice(0, 8)));
+        }
+
+        function init() {
+            if (!program) {
+                document.getElementById('program-title').innerHTML = 'Program <span class="text-brand">Not Found</span>';
+                document.getElementById('program-subtitle').innerText = '';
+                document.getElementById('day-tabs-container').innerHTML = '';
+                document.getElementById('complete-btn').style.display = 'none';
+                document.querySelector('section').innerHTML = `
+                    <div class="col-span-full py-16 text-center max-w-md mx-auto">
+                        <p class="text-black font-black text-xl italic">
+                            No program matches "<span class="text-brand">${slug}</span>".
+                        </p>
+                        <p class="text-gray-400 text-sm mt-3">
+                            The link may be broken, or this program hasn't been added to data.js yet.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                            <a href="programs.html"
+                               class="bg-black text-white font-black uppercase italic text-xs px-8 py-4 rounded-2xl hover:bg-brand hover:text-black transition-all">
+                                Browse Programs
+                            </a>
+                            <a href="index.html"
+                               class="border-2 border-gray-200 text-black font-black uppercase italic text-xs px-8 py-4 rounded-2xl hover:border-brand hover:text-brand transition-all">
+                                Back to Home
+                            </a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            document.getElementById('program-title').innerText = program.title;
+            document.getElementById('program-subtitle').innerText = program.subtitle || '';
+
+            recordRecentVisit(slug);
+
+            const container = document.getElementById('day-tabs-container');
+            container.innerHTML = '';
+            for (let i = 1; i <= 30; i++) {
+                const isDone = localStorage.getItem(storageKey(i)) === 'true';
+                container.innerHTML += `
+                    <button id="tab-${i}" onclick="selectDay(${i})"
+                        class="flex-shrink-0 w-20 h-20 rounded-2xl border-2 border-gray-800 flex flex-col items-center justify-center transition-all duration-300
+                        ${isDone ? 'completed-day' : 'bg-gray-900'} ${i === 1 ? 'active-day' : ''}">
+                        <span class="text-[8px] font-bold uppercase opacity-60">Day</span>
+                        <span class="text-2xl font-black">${i}</span>
+                    </button>
+                `;
+            }
+            selectDay(1);
+            updateGlobalProgress();
+        }
+
+        function selectDay(day) {
+            document.querySelectorAll('#day-tabs-container button').forEach(btn => btn.classList.remove('active-day'));
+            document.getElementById(`tab-${day}`).classList.add('active-day');
+
+            activeDay = day;
+            const data = program.days[day] || { focus: "Rest & Recovery", ex: [] };
+
+            document.getElementById('current-day-title').innerText = `Day ${day}`;
+            document.getElementById('day-focus').innerText = `Focus: ${data.focus}`;
+
+            const isDone = localStorage.getItem(storageKey(day)) === 'true';
+            const btn = document.getElementById('complete-btn');
+            btn.innerHTML = isDone ? "✓ Session Complete" : "Mark Day as Finished";
+            btn.className = isDone
+                ? "w-full md:w-auto bg-green-500 text-white font-black uppercase italic text-xs px-8 py-4 rounded-2xl"
+                : "w-full md:w-auto bg-black text-white font-black uppercase italic text-xs px-8 py-4 rounded-2xl hover:bg-brand hover:text-black transition-all";
+
+            const content = document.getElementById('exercise-content');
+            if (data.ex.length === 0) {
+                content.innerHTML = `<div class="col-span-full py-20 text-center"><p class="text-gray-300 italic font-medium text-xl">Active Recovery: Gentle Stretching & Hydration</p></div>`;
+            } else {
+                content.innerHTML = data.ex.map(ex => `
+                    <div class="flex flex-col items-center group">
+                        <div class="w-full aspect-video rounded-3xl overflow-hidden border-4 border-gray-50 bg-gray-50 mb-6 shadow-sm group-hover:shadow-md transition">
+                            <img src="${ex.img}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500">
+                        </div>
+                        <p class="text-black font-black text-3xl italic uppercase tracking-tighter">${ex.reps} <span class="text-gray-300">${ex.name}</span></p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function markAsDone() {
+            localStorage.setItem(storageKey(activeDay), 'true');
+            document.getElementById(`tab-${activeDay}`).classList.add('completed-day');
+            updateGlobalProgress();
+            selectDay(activeDay);
+        }
+
+        function updateGlobalProgress() {
+            let completed = 0;
+            let maxDoneDay = 0;
+            for (let i = 1; i <= 30; i++) {
+                if (localStorage.getItem(storageKey(i)) === 'true') {
+                    completed++;
+                    maxDoneDay = i;
+                }
+            }
+            const percentage = Math.round((completed / 30) * 100);
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-percent').innerText = `${percentage}%`;
+
+            // Current streak: consecutive completed days counting back
+            // from the furthest day the user has reached so far.
+            let streak = 0;
+            for (let i = maxDoneDay; i >= 1; i--) {
+                if (localStorage.getItem(storageKey(i)) === 'true') streak++;
+                else break;
+            }
+            document.getElementById('streak-count').innerText = `🔥 ${streak} Day${streak === 1 ? '' : 's'}`;
+        }
+
+        window.onload = init;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IronPulse | Page Not Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { logo: ['Pacifico', 'cursive'], sans: ['Inter', 'sans-serif'] },
+                    colors: { brand: '#ff6b00' }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-black text-white font-sans min-h-screen flex flex-col">
+
+    <nav class="bg-gray-900 border-b border-gray-800 p-6">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-logo text-brand cursor-pointer" onclick="window.location.href='index.html'">
+                IronPulse</h1>
+            <a href="index.html"
+                class="text-sm font-bold uppercase tracking-widest border border-brand px-4 py-2 rounded-lg hover:bg-brand hover:text-black transition">Back
+                to Home</a>
+        </div>
+    </nav>
+
+    <main class="flex-1 flex items-center justify-center px-6 py-24">
+        <div class="text-center max-w-lg">
+            <p class="text-brand font-black text-[10rem] leading-none tracking-tighter italic">404</p>
+            <h2 class="text-4xl font-black uppercase italic tracking-tighter mt-2">Rep Not Found</h2>
+            <p class="text-gray-500 mt-4 text-sm leading-relaxed">
+                That page dropped the weight and walked off. The link may be broken, or the page has moved.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mt-10">
+                <a href="index.html"
+                    class="bg-brand text-black font-black uppercase italic text-xs px-8 py-4 rounded-2xl hover:bg-white transition-all">
+                    Back to Home
+                </a>
+                <a href="programs.html"
+                    class="border-2 border-gray-800 text-white font-black uppercase italic text-xs px-8 py-4 rounded-2xl hover:border-brand hover:text-brand transition-all">
+                    Browse Programs
+                </a>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

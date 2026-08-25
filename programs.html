@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IronPulse | The Vault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        logo: ['Pacifico', 'cursive'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: { brand: '#ff6b00' }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-black text-white font-sans min-h-screen">
+
+    <nav class="bg-gray-900 border-b border-gray-800 p-6 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-logo text-brand">IronPulse</h1>
+            <a href="index.html"
+                class="text-sm font-bold uppercase tracking-widest border border-brand px-4 py-2 rounded-lg hover:bg-brand hover:text-black transition">Back
+                to Home</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <div class="mb-6">
+            <input type="text" id="search-input" placeholder="Search programs..."
+                oninput="handleSearchInput(this.value)"
+                class="w-full md:w-96 bg-gray-900 border-2 border-gray-800 focus:border-brand outline-none rounded-xl px-5 py-3 text-sm font-bold placeholder-gray-600 transition">
+        </div>
+
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-black uppercase italic tracking-tighter">Filters</h2>
+            <button onclick="clearFilters()"
+                class="text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-brand transition">
+                Clear All
+            </button>
+        </div>
+
+        <div id="filter-groups" class="flex flex-wrap gap-3 mb-4">
+            <!-- Facet dropdowns (Type / Body Focus / Equipment / Difficulty) injected from data.js -->
+        </div>
+
+        <div id="active-chips" class="flex flex-wrap gap-2 mb-10">
+            <!-- Removable chips for active filters + search, injected from data.js -->
+        </div>
+
+        <div class="flex items-center justify-between mb-6">
+            <p id="result-count" class="text-gray-500 text-[10px] font-bold uppercase tracking-widest"></p>
+        </div>
+
+        <div id="programs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Cards injected from data.js -->
+        </div>
+
+        <p id="empty-state" class="hidden text-gray-500 text-sm italic py-20 text-center">
+            No programs match these filters. Try clearing one.
+        </p>
+    </main>
+
+    <!-- Shared data file: one source of truth for both this page and program-detail.html -->
+    <script src="data.js"></script>
+    <script>
+        // Fixed display order for difficulty; everything else sorts by
+        // first-seen order across the programs.
+        const DIFFICULTY_ORDER = ["Beginner", "Intermediate", "Advanced"];
+
+        // Which field on a program each facet reads, and whether that
+        // field is a single string (category, difficulty) or an array
+        // (bodyFocus, equipment).
+        const FACETS = [
+            { key: "category", label: "Type", isArray: false },
+            { key: "bodyFocus", label: "Body Focus", isArray: true },
+            { key: "equipment", label: "Equipment", isArray: true },
+            { key: "difficulty", label: "Difficulty", isArray: false }
+        ];
+
+        // activeFilters.category = Set of selected values for that facet.
+        // An empty Set means "no constraint from this facet" (matches all).
+        const activeFilters = {};
+        FACETS.forEach(f => activeFilters[f.key] = new Set());
+
+        // Which facet's dropdown panel is currently open (null = none).
+        // Kept outside renderFilterGroups so re-renders (e.g. after
+        // toggling a pill) don't collapse the panel the user is using.
+        let openDropdown = null;
+
+        // Free-text search, matched against title + description.
+        let searchQuery = '';
+
+        function toggleDropdown(facetKey) {
+            openDropdown = openDropdown === facetKey ? null : facetKey;
+            renderFilterGroups();
+        }
+
+        // Mirrors activeFilters + searchQuery into the URL so a refresh
+        // or a shared link preserves the current view.
+        function syncURL() {
+            const params = new URLSearchParams();
+            FACETS.forEach(f => {
+                const vals = [...activeFilters[f.key]];
+                if (vals.length) params.set(f.key, vals.join(','));
+            });
+            if (searchQuery.trim()) params.set('search', searchQuery.trim());
+            const qs = params.toString();
+            history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
+        }
+
+        // Reads activeFilters + searchQuery back out of the URL on load.
+        function loadFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            FACETS.forEach(f => {
+                const raw = params.get(f.key);
+                if (raw) raw.split(',').forEach(v => activeFilters[f.key].add(v));
+            });
+            const s = params.get('search');
+            if (s) searchQuery = s;
+        }
+
+        function handleSearchInput(value) {
+            searchQuery = value;
+            syncURL();
+            renderActiveChips();
+            renderProgramCards();
+        }
+
+        function clearSearch() {
+            searchQuery = '';
+            document.getElementById('search-input').value = '';
+            syncURL();
+            renderActiveChips();
+            renderProgramCards();
+        }
+
+        function optionsFor(facet) {
+            const values = new Set();
+            Object.values(PROGRAMS_DATA).forEach(program => {
+                const v = program[facet.key];
+                if (facet.isArray) v.forEach(x => values.add(x));
+                else values.add(v);
+            });
+            const list = [...values];
+            if (facet.key === "difficulty") {
+                return list.sort((a, b) => DIFFICULTY_ORDER.indexOf(a) - DIFFICULTY_ORDER.indexOf(b));
+            }
+            return list;
+        }
+
+        function toggleFilter(facetKey, value) {
+            const set = activeFilters[facetKey];
+            if (set.has(value)) set.delete(value);
+            else set.add(value);
+            syncURL();
+            renderFilterGroups();
+            renderActiveChips();
+            renderProgramCards();
+        }
+
+        function clearFilters() {
+            FACETS.forEach(f => activeFilters[f.key].clear());
+            syncURL();
+            renderFilterGroups();
+            renderActiveChips();
+            renderProgramCards();
+        }
+
+        function renderFilterGroups() {
+            const container = document.getElementById('filter-groups');
+            container.innerHTML = FACETS.map(facet => {
+                const options = optionsFor(facet);
+                const activeCount = activeFilters[facet.key].size;
+                const isOpen = openDropdown === facet.key;
+
+                const pills = options.map(value => {
+                    const active = activeFilters[facet.key].has(value);
+                    return `
+                        <button onclick="toggleFilter('${facet.key}', '${value.replace(/'/g, "\\'")}')"
+                            class="text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-full border-2 transition-all whitespace-nowrap
+                            ${active ? 'bg-brand text-black border-brand' : 'bg-black text-gray-400 border-gray-800 hover:border-brand hover:text-brand'}">
+                            ${value}
+                        </button>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="relative" data-facet="${facet.key}">
+                        <button onclick="toggleDropdown('${facet.key}')"
+                            class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-4 py-3 rounded-xl border-2 transition-all
+                            ${activeCount > 0 ? 'bg-brand text-black border-brand' : 'bg-gray-900 text-gray-300 border-gray-800 hover:border-brand hover:text-brand'}">
+                            <span>${facet.label}${activeCount > 0 ? ` (${activeCount})` : ''}</span>
+                            <span class="transition-transform ${isOpen ? 'rotate-180' : ''}">▾</span>
+                        </button>
+                        <div class="absolute left-0 top-full mt-2 w-64 max-h-72 overflow-y-auto bg-gray-900 border-2 border-gray-800 rounded-2xl p-4 shadow-2xl z-50 flex flex-wrap gap-2 ${isOpen ? '' : 'hidden'}">
+                            ${pills}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Clicking anywhere outside an open dropdown closes it.
+        document.addEventListener('click', (e) => {
+            if (openDropdown && !e.target.closest(`[data-facet="${openDropdown}"]`)) {
+                openDropdown = null;
+                renderFilterGroups();
+            }
+        });
+
+        // Small removable pills summarizing every active filter + the
+        // current search term, so the user can drop one constraint at a
+        // time without reopening a dropdown or hitting "Clear All".
+        function renderActiveChips() {
+            const container = document.getElementById('active-chips');
+            const chips = [];
+
+            FACETS.forEach(f => {
+                activeFilters[f.key].forEach(value => {
+                    chips.push({
+                        label: `${f.label}: ${value}`,
+                        onclick: `toggleFilter('${f.key}', '${value.replace(/'/g, "\\'")}')`
+                    });
+                });
+            });
+
+            if (searchQuery.trim()) {
+                chips.push({
+                    label: `Search: "${searchQuery.trim()}"`,
+                    onclick: `clearSearch()`
+                });
+            }
+
+            container.innerHTML = chips.map(chip => `
+                <button onclick="${chip.onclick}"
+                    class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-2 rounded-full bg-brand/10 border border-brand text-brand hover:bg-brand hover:text-black transition-all">
+                    <span>${chip.label}</span>
+                    <span class="text-sm leading-none">×</span>
+                </button>
+            `).join('');
+        }
+
+        function programMatches(program) {
+            const matchesFacets = FACETS.every(facet => {
+                const selected = activeFilters[facet.key];
+                if (selected.size === 0) return true; // no constraint from this facet
+                if (facet.isArray) {
+                    return program[facet.key].some(v => selected.has(v));
+                }
+                return selected.has(program[facet.key]);
+            });
+            if (!matchesFacets) return false;
+
+            const q = searchQuery.trim().toLowerCase();
+            if (!q) return true;
+            return program.title.toLowerCase().includes(q) || program.description.toLowerCase().includes(q);
+        }
+
+        function renderProgramCards() {
+            const grid = document.getElementById('programs-grid');
+            const emptyState = document.getElementById('empty-state');
+            const resultCount = document.getElementById('result-count');
+
+            const slugs = Object.keys(PROGRAMS_DATA).filter(slug => programMatches(PROGRAMS_DATA[slug]));
+
+            resultCount.innerText = `${slugs.length} program${slugs.length === 1 ? '' : 's'}`;
+
+            if (slugs.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            grid.innerHTML = slugs.map(slug => {
+                const program = PROGRAMS_DATA[slug];
+                return `
+                    <div class="bg-gray-900 rounded-3xl p-10 border-2 border-gray-800 hover:border-brand transition-all cursor-pointer group shadow-xl"
+                         onclick="window.location.href='program-detail.html?program=${slug}'">
+                        <div class="flex justify-between items-start mb-4 gap-2 flex-wrap">
+                            <span class="text-[10px] bg-brand/20 text-brand px-2 py-1 rounded font-bold uppercase tracking-tighter">${program.category}</span>
+                            <span class="text-[10px] bg-gray-800 text-gray-400 px-2 py-1 rounded font-bold uppercase tracking-tighter">${program.difficulty}</span>
+                        </div>
+                        <h3 class="text-4xl font-black uppercase italic group-hover:text-brand transition">${program.title}</h3>
+                        <p class="text-gray-500 mt-4 text-sm leading-relaxed">${program.description}</p>
+                        <p class="text-gray-600 mt-4 text-[10px] font-bold uppercase tracking-widest">
+                            ${program.bodyFocus.join(' · ')}
+                        </p>
+                        <p class="text-gray-600 mt-1 text-[10px] font-bold uppercase tracking-widest">
+                            Equipment: ${program.equipment.join(', ')}
+                        </p>
+                        <div class="mt-8 flex items-center text-xs font-bold text-brand uppercase tracking-widest">
+                            <span>View Technical Steps</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function init() {
+            loadFromURL();
+            document.getElementById('search-input').value = searchQuery;
+            renderFilterGroups();
+            renderActiveChips();
+            renderProgramCards();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+
+</html>
