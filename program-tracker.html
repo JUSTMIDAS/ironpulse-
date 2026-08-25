@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IronPulse | 30-Day Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { colors: { brand: '#ff6b00' } }
+            }
+        }
+    </script>
+    <style>
+        /* Custom checkbox styling for a premium feel */
+        .day-checkbox:checked + .day-label {
+            background-color: #ff6b00;
+            color: black;
+            border-color: #ff6b00;
+        }
+    </style>
+</head>
+<body class="bg-black text-white font-sans min-h-screen pb-20">
+
+    <main class="container mx-auto px-6 py-12 max-w-5xl">
+        <header class="mb-12 flex justify-between items-end">
+            <div>
+                <h2 class="text-6xl font-black uppercase italic tracking-tighter">Iron <span class="text-brand">Origins</span></h2>
+                <p class="text-gray-400 mt-2 italic">30-Day Foundation Program</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Progress</p>
+                <p id="progress-text" class="text-3xl font-black text-brand italic">0/30</p>
+            </div>
+        </header>
+
+        <div id="calendar-grid" class="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-10 gap-4">
+            </div>
+
+        <section class="mt-16 bg-gray-900 rounded-[2.5rem] p-10 border border-gray-800 shadow-2xl">
+            <h3 class="text-3xl font-black uppercase italic mb-6">Today's <span class="text-brand">Objective</span></h3>
+            <div id="day-content">
+                <p class="text-gray-400 italic">Select a day from the grid above to view the specific workout circuit.</p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const totalDays = 30;
+        const grid = document.getElementById('calendar-grid');
+        const progressText = document.getElementById('progress-text');
+
+        // Function to create the grid
+        function initTracker() {
+            for (let i = 1; i <= totalDays; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = "relative group";
+                
+                // Get initial state from storage
+                const isCompleted = localStorage.getItem(`day-${i}`) === 'true';
+                
+                dayDiv.innerHTML = `
+                    <input type="checkbox" id="check-${i}" class="hidden day-checkbox" 
+                           ${isCompleted ? 'checked' : ''} onchange="toggleDay(${i})">
+                    <label for="check-${i}" class="day-label flex flex-col items-center justify-center aspect-square rounded-2xl border-2 border-gray-800 bg-gray-900 cursor-pointer hover:border-brand transition-all duration-300">
+                        <span class="text-[10px] font-bold uppercase text-gray-500">Day</span>
+                        <span class="text-xl font-black">${i}</span>
+                    </label>
+                `;
+                grid.appendChild(dayDiv);
+            }
+            updateProgress();
+        }
+
+        function toggleDay(dayIndex) {
+            const checkbox = document.getElementById(`check-${dayIndex}`);
+            // Save to local storage
+            localStorage.setItem(`day-${dayIndex}`, checkbox.checked);
+            updateProgress();
+            
+            if(checkbox.checked) {
+                showWorkout(dayIndex);
+            }
+        }
+
+        function updateProgress() {
+            let completed = 0;
+            for (let i = 1; i <= totalDays; i++) {
+                if (localStorage.getItem(`day-${i}`) === 'true') completed++;
+            }
+            progressText.innerText = `${completed}/${totalDays}`;
+        }
+
+        function showWorkout(day) {
+            const content = document.getElementById('day-content');
+            // You can link this to specific workout logic later
+            content.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-2xl font-black text-white uppercase">Pulse Circuit v.1</h4>
+                        <p class="text-gray-400 mt-1">Focus: Cardio & Core Stability</p>
+                    </div>
+                    <a href="exercise-detail.html" class="bg-brand text-black font-black uppercase italic px-6 py-3 rounded-xl hover:bg-white transition">Go to Training</a>
+                </div>
+            `;
+        }
+
+        window.onload = initTracker;
+    </script>
+</body>
+</html>
